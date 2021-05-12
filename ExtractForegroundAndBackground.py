@@ -7,10 +7,11 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 from PIL import Image
+import glob
 
 
 # Global Variables
-base_path = os.getcwd() + "/ModelHardening-main"
+base_path = os.getcwd()
 pascal_segmentation_model = base_path + \
     "/deeplabv3_xception_tf_dim_ordering_tf_kernels.h5"
 
@@ -45,8 +46,8 @@ cifarLabels = {
 cifarImageCounts = {key: 1 for key in range(10)}
 
 
-def ExtractForegroundAndBackground(img, label, output_path):
-    filename = f"{output_path}/{cifarLabels[label]}_{cifarImageCounts[label]}_original.jpg"
+def ExtractForegroundAndBackground(img, label, imgCount, output_path):
+    filename = f"{output_path}/{label}_{imgCount}_original.jpg"
 
     # saving originam image
     plt.imsave(filename, img)
@@ -63,14 +64,14 @@ def ExtractForegroundAndBackground(img, label, output_path):
     mask[newmask == 0] = 0
     mask[newmask != 0] = 1
     foreground = img*mask[:, :, np.newaxis]
-    filename = f"{output_path}/{cifarLabels[label]}_{cifarImageCounts[label]}_foreground.jpg"
+    filename = f"{output_path}/{label}_{imgCount}_foreground.jpg"
     plt.imsave(filename, foreground)
 
     # saving background
     mask[newmask == 0] = 1
     mask[newmask != 0] = 0
     background = img*mask[:, :, np.newaxis]
-    filename = f"{output_path}/{cifarLabels[label]}_{cifarImageCounts[label]}_background.jpg"
+    filename = f"{output_path}/{label}_{imgCount}_background.jpg"
     plt.imsave(filename, background)
 
 
@@ -85,12 +86,13 @@ def ProcessCifarData():
     # Ensure that output path exist
     os.makedirs(train_path, exist_ok=True)
 
-    train_images = 10  # x_train.shape[0]
+    train_images = 4  # x_train.shape[0]
 
     # generating training data
     for i in range(train_images):
         label = y_train[i][0]
-        ExtractForegroundAndBackground(x_train[i], label, train_path)
+        ExtractForegroundAndBackground(x_train[i], {cifarLabels[label]}, {
+                                       cifarImageCounts[label]}, train_path)
         cifarImageCounts[label] += 1
 
     # Uncomment to process test images
@@ -113,14 +115,11 @@ def ProcessLocalImages():
 
     for file in glob.glob("*.png"):
         img = Image.open(file)
-        ExtractForegroundAndBackground(np.asarray(img), file, train_path)
+        ExtractForegroundAndBackground(np.asarray(img), file, 1, train_path)
 
 
 # Processing Cifar dataset
 ProcessCifarData()
-os.remove('mask.png')
-if isDownloaded:
-    os.remove(pascal_segmentation_model)
 
-# Processing local images
-# ProcessLocalImages()
+# Processing local images: uncomment below code to run for images in local folder
+#ProcessLocalImages()
