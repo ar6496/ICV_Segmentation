@@ -8,3 +8,7 @@ Dependencies:
 - opencv-python
 - matplotlib
 - tensorflow
+- torch
+- ONNX
+- ORT
+- pickle
